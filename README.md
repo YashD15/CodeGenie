@@ -22,19 +22,11 @@ CodeGenie is a Flutter-based mobile application that generates code snippets for
 
 ---
 
-## 📱 Screenshots
-
-> *(You can include app screenshots here to showcase the UI)*
-
----
-
 ## 👥 Collaborators
 
-Made with ❤️ by:
-
-- [Your Name](https://github.com/yourusername)
-- [Collaborator 1](https://github.com/collaborator1)
-- [Collaborator 2](https://github.com/collaborator2)
+- [Varad Khandare](https://github.com/Varad11220)
+- [Yash Dhavde](https://github.com/YashD15)
+- [Pratik Bhuvad](https://github.com/Pratik-Bhuvad)
 
 ---
 
