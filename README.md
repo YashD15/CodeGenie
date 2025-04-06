@@ -42,7 +42,7 @@ CodeGenie is a Flutter-based mobile application that generates code snippets for
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/yourusername/codegenie.git
+git clone https://github.com/YashD15/codegenie.git
 cd codegenie
 flutter pub get
 flutter run
