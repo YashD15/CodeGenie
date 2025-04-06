@@ -5,14 +5,13 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'package:flutter_highlight/flutter_highlight.dart';
-import 'package:flutter_highlight/themes/atom-one-dark.dart';
-import 'package:flutter_highlight/themes/vs.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ThemeManager.initialize();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -331,9 +330,9 @@ class ChatScreen extends StatefulWidget {
 
 class BottomInsetAvoidingWidget extends StatelessWidget {
   final Widget child;
-  
+
   const BottomInsetAvoidingWidget({super.key, required this.child});
-  
+
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets;
@@ -393,19 +392,29 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   Future<void> _loadApiKey() async {
     final prefs = await SharedPreferences.getInstance();
-    final apiKey = prefs.getString('gemini_api_key');
+    // Try to load from .env file first
+    String apiKey = dotenv.env['Gemini'] ?? '';
+    // If not found in .env, try to load from SharedPreferences
+    if (apiKey.isEmpty) {
+      final apiKey = prefs.getString('gemini_api_key') ?? '';
+    }
 
     setState(() {
-      _apiKey = apiKey ?? 'AIzaSyAhqjjAkdB6xJ-U1-8lo8OC0GcL-OK5eQM';
+      //Add your own gemini api key here statically or during using app
+      //Also you can create .env and variable as 'Gemini'
+      _apiKey = apiKey.isNotEmpty ? apiKey : 'YOUR_API_KEY';
       _initializeModel();
     });
   }
 
   void _initializeModel() {
     try {
-      print('Initializing model with API key: ${_apiKey?.substring(0, 5)}...'); // Debug log
+      print(
+        'Initializing model with API key: ${_apiKey?.substring(0, 5)}...',
+      ); // Debug log
       _model = GenerativeModel(
-        model: 'gemini-2.0-flash', // Changed from gemini-2.0-flash to gemini-pro
+        model:
+            'gemini-2.0-flash', // Changed from gemini-2.0-flash to gemini-pro
         apiKey: _apiKey!,
         generationConfig: GenerationConfig(
           temperature: 0.7,
@@ -562,183 +571,188 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.code, color: primaryColor),
-            const SizedBox(width: 4),
-            const Text(
-              'Stored Code Snippets',
-              style: TextStyle(
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        titlePadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        actionsPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-        backgroundColor: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        content: Container(
-          width: double.maxFinite,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.6,
-          ),
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: snippets.length,
-            itemBuilder: (context, index) {
-              final snippet = snippets[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 6),
-                color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(
-                    color: isDarkMode 
-                        ? Colors.grey[800]! 
-                        : Colors.grey[300]!,
-                    width: 1,
-                  ),
+      builder:
+          (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.code, color: primaryColor),
+                const SizedBox(width: 4),
+                const Text(
+                  'Stored Code Snippets',
+                  style: TextStyle(fontSize: 18),
                 ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+              ],
+            ),
+            titlePadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            actionsPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            backgroundColor:
+                isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            content: Container(
+              width: double.maxFinite,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: snippets.length,
+                itemBuilder: (context, index) {
+                  final snippet = snippets[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                        color:
+                            isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              snippet.language,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  snippet.language,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _formatTimestamp(snippet.createdAt),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color:
+                                      isDarkMode
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _formatTimestamp(snippet.createdAt),
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isDarkMode 
-                                  ? Colors.grey[400] 
-                                  : Colors.grey[600],
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.copy,
+                                  size: 16,
+                                  color: primaryColor,
+                                ),
+                                onPressed:
+                                    () => _copyToClipboard(
+                                      snippet.code,
+                                      isPlainCode: true,
+                                    ),
+                                tooltip: 'Copy code',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 18,
+                                  minHeight: 20,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.edit,
+                                  size: 16,
+                                  color: primaryColor,
+                                ),
+                                onPressed: () {
+                                  _codeToModify = snippet.id;
+                                  _promptController.text =
+                                      'Modify this code: ${snippet.formattedCode}';
+                                  Navigator.pop(context);
+                                },
+                                tooltip: 'Modify code',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 18,
+                                  minHeight: 20,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.copy,
-                              size: 16,
-                              color: primaryColor,
-                            ),
-                            onPressed: () => _copyToClipboard(
-                              snippet.code,
-                              isPlainCode: true,
-                            ),
-                            tooltip: 'Copy code',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 20,
-                            ),
+                      subtitle: Container(
+                        margin: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              isDarkMode
+                                  ? const Color(0xFF1A1A1A)
+                                  : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color:
+                                isDarkMode
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!,
                           ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.edit,
-                              size: 16,
-                              color: primaryColor,
-                            ),
-                            onPressed: () {
-                              _codeToModify = snippet.id;
-                              _promptController.text =
-                                  'Modify this code: ${snippet.formattedCode}';
-                              Navigator.pop(context);
-                            },
-                            tooltip: 'Modify code',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 20,
-                            ),
+                        ),
+                        child: Text(
+                          snippet.code.length > 100
+                              ? '${snippet.code.substring(0, 100)}...'
+                              : snippet.code,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                            color:
+                                isDarkMode
+                                    ? Colors.grey[300]
+                                    : Colors.grey[800],
                           ),
-                        ],
+                        ),
                       ),
-                    ],
-                  ),
-                  subtitle: Container(
-                    margin: const EdgeInsets.only(top: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isDarkMode 
-                          ? const Color(0xFF1A1A1A) 
-                          : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: isDarkMode 
-                            ? Colors.grey[800]! 
-                            : Colors.grey[300]!,
-                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showCodeDetailDialog(snippet);
+                      },
                     ),
-                    child: Text(
-                      snippet.code.length > 100
-                          ? '${snippet.code.substring(0, 100)}...'
-                          : snippet.code,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                        color: isDarkMode 
-                            ? Colors.grey[300] 
-                            : Colors.grey[800],
-                      ),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showCodeDetailDialog(snippet);
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              minimumSize: Size.zero,
-            ),
-            child: Text(
-              'Close',
-              style: TextStyle(
-                color: primaryColor,
+                  );
+                },
               ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  minimumSize: Size.zero,
+                ),
+                child: Text('Close', style: TextStyle(color: primaryColor)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -1107,11 +1121,11 @@ User request: $userMessage
 
       final content = [Content.text(prompt)];
       final response = await _model.generateContent(content);
-      
+
       if (response.text == null) {
         throw Exception('No response generated from the model');
       }
-      
+
       final responseText = response.text!;
 
       // Add to conversation memory
@@ -1137,7 +1151,8 @@ User request: $userMessage
         _messages.add(
           ChatMessage(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
-            text: 'Error: Please check your API key and make sure it has access to the Gemini API. Error details: $e',
+            text:
+                'Error: Please check your API key and make sure it has access to the Gemini API. Error details: $e',
             isUser: false,
           ),
         );
@@ -1194,28 +1209,29 @@ User request: $userMessage
             icon: const Icon(Icons.more_vert),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 40),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'api_key',
-                child: Row(
-                  children: [
-                    Icon(Icons.key),
-                    SizedBox(width: 8),
-                    Text('API Key'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'clear',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete),
-                    SizedBox(width: 8),
-                    Text('Clear Chat'),
-                  ],
-                ),
-              ),
-            ],
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(
+                    value: 'api_key',
+                    child: Row(
+                      children: [
+                        Icon(Icons.key),
+                        SizedBox(width: 8),
+                        Text('API Key'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'clear',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete),
+                        SizedBox(width: 8),
+                        Text('Clear Chat'),
+                      ],
+                    ),
+                  ),
+                ],
             onSelected: (value) {
               if (value == 'api_key') {
                 _showApiKeyDialog();
@@ -1234,7 +1250,10 @@ User request: $userMessage
               Expanded(
                 child: SafeArea(
                   bottom: false,
-                  child: _messages.isEmpty ? _buildWelcomeScreen() : _buildChatList(),
+                  child:
+                      _messages.isEmpty
+                          ? _buildWelcomeScreen()
+                          : _buildChatList(),
                 ),
               ),
               if (_isLoading)
@@ -1268,24 +1287,26 @@ User request: $userMessage
                           child: TextField(
                             controller: _promptController,
                             decoration: InputDecoration(
-                              hintText: _editingMessageId != null
-                                  ? 'Edit your message...'
-                                  : 'Ask for code help...',
+                              hintText:
+                                  _editingMessageId != null
+                                      ? 'Edit your message...'
+                                      : 'Ask for code help...',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               prefixIcon: Icon(Icons.code, color: primaryColor),
-                              suffixIcon: _promptController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        setState(() {
-                                          _editingMessageId = null;
-                                          _promptController.clear();
-                                        });
-                                      },
-                                    )
-                                  : null,
+                              suffixIcon:
+                                  _promptController.text.isNotEmpty
+                                      ? IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          setState(() {
+                                            _editingMessageId = null;
+                                            _promptController.clear();
+                                          });
+                                        },
+                                      )
+                                      : null,
                             ),
                             maxLines: null,
                             textInputAction: TextInputAction.send,
@@ -1329,11 +1350,7 @@ User request: $userMessage
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            Image.asset(
-              'assets/img/logo3.png',
-              width: 80,
-              height: 80,
-            ),
+            Image.asset('assets/img/logo3.png', width: 80, height: 80),
             const SizedBox(height: 2),
             Text(
               'CodeGenie',
@@ -1363,7 +1380,10 @@ User request: $userMessage
                   children: [
                     const Text(
                       'Examples:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     for (final prompt in _suggestedPrompts)
@@ -1377,12 +1397,14 @@ User request: $userMessage
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: isDarkMode ? Colors.grey[900] : Colors.white,
+                              color:
+                                  isDarkMode ? Colors.grey[900] : Colors.white,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: isDarkMode
-                                    ? Colors.grey[700]!
-                                    : Colors.grey[300]!,
+                                color:
+                                    isDarkMode
+                                        ? Colors.grey[700]!
+                                        : Colors.grey[300]!,
                               ),
                             ),
                             child: Text(prompt),
@@ -1393,7 +1415,9 @@ User request: $userMessage
                 ),
               ),
             ),
-            const SizedBox(height: 20), // Add padding at the bottom for keyboard
+            const SizedBox(
+              height: 20,
+            ), // Add padding at the bottom for keyboard
           ],
         ),
       ),
@@ -1454,7 +1478,7 @@ User request: $userMessage
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 0, 
+                      vertical: 0,
                     ),
                     color:
                         message.isUser
