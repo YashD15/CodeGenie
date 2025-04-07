@@ -27,6 +27,7 @@ CodeGenie is a Flutter-based mobile application that generates code snippets for
 - [Varad Khandare](https://github.com/Varad11220)
 - [Yash Dhavde](https://github.com/YashD15)
 - [Pratik Bhuvad](https://github.com/Pratik-Bhuvad)
+- [Sumit Patel](https://github.com/Dark-Kernel)
 
 ---
 
